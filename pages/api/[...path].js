@@ -7,3 +7,9 @@ export default function handler(req, res) {
   }
   return apiApp(req, res);
 }
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};

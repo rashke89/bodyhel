@@ -15,6 +15,9 @@ const app = express();
 // Connect to MongoDB (mongoose caches the connection)
 connectDB();
 
+// Trust proxy (required on Vercel for rate limiting and correct IPs)
+app.set('trust proxy', 1);
+
 // CORS configuration (must be before helmet)
 app.use(
   cors({
