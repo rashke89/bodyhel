@@ -90,11 +90,9 @@ export default function UserModal({ isOpen, onClose, onSave, user }: UserModalPr
     try {
       if (user) {
         // Update existing user (don't send password if empty)
-        const updateData = { ...formData };
-        if (!updateData.password) {
-          delete updateData.password;
-        }
-        await api.updateUser(user._id, updateData);
+        const { password, ...updateData } = formData;
+        const finalData = password ? { ...updateData, password } : updateData;
+        await api.updateUser(user._id, finalData);
       } else {
         // Create new user (password is required)
         if (!formData.password) {

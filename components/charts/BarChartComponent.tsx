@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 interface BarChartComponentProps {
-  data: { name: string; value: number }[];
+  data: { name: string; value: number }[] | any;
   title?: string;
   color?: string;
   height?: number;

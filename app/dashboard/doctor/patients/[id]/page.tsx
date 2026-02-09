@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 
 export default function PatientEHRPage() {
   const params = useParams();
-  const patientId = params.id as string;
+  const patientId = params?.id as string;
   const [ehr, setEhr] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'diagnoses' | 'vitals' | 'prescriptions' | 'lab'>('overview');

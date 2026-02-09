@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -17,27 +17,27 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      const returnUrl = searchParams.get('returnUrl');
+      const returnUrl = searchParams?.get("returnUrl");
       if (returnUrl) {
         router.push(returnUrl);
       } else {
         // Redirect to appropriate dashboard
         switch (user.role) {
-          case 'patient':
-            router.push('/dashboard/patient');
+          case "patient":
+            router.push("/dashboard/patient");
             break;
-          case 'doctor':
-          case 'nurse':
-            router.push('/dashboard/doctor');
+          case "doctor":
+          case "nurse":
+            router.push("/dashboard/doctor");
             break;
-          case 'admin':
-            router.push('/dashboard/admin');
+          case "admin":
+            router.push("/dashboard/admin");
             break;
-          case 'receptionist':
-            router.push('/dashboard/receptionist');
+          case "receptionist":
+            router.push("/dashboard/receptionist");
             break;
           default:
-            router.push('/dashboard');
+            router.push("/dashboard");
         }
       }
     }
@@ -45,13 +45,13 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       await login(email, password);
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,10 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Email adresa
             </label>
             <input
@@ -88,7 +91,10 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Lozinka
             </label>
             <input
@@ -107,14 +113,17 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-[#6BB2A0] text-white py-3 rounded-lg font-semibold hover:bg-[#5a9d8c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Prijavljivanje...' : 'Prijavi se'}
+            {loading ? "Prijavljivanje..." : "Prijavi se"}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">
-            Nemate nalog?{' '}
-            <Link href="/register" className="text-[#6BB2A0] hover:underline font-semibold">
+            Nemate nalog?{" "}
+            <Link
+              href="/register"
+              className="text-[#6BB2A0] hover:underline font-semibold"
+            >
               Registrujte se
             </Link>
           </p>
@@ -127,5 +136,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#E0ECDE] to-[#CDE0C9]">
+        <div className="text-[#2C6975]">Učitavanje...</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

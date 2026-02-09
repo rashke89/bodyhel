@@ -24,7 +24,7 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {
@@ -66,9 +66,7 @@ class ApiClient {
       const error = await response
         .json()
         .catch(() => ({ error: "Download failed" }));
-      throw new Error(
-        error.error || `HTTP error! status: ${response.status}`
-      );
+      throw new Error(error.error || `HTTP error! status: ${response.status}`);
     }
 
     return response.blob();
@@ -142,7 +140,7 @@ class ApiClient {
       });
     }
     return this.request<{ appointments: any[] }>(
-      `/appointments?${query.toString()}`
+      `/appointments?${query.toString()}`,
     );
   }
 
@@ -181,7 +179,7 @@ class ApiClient {
       isRecurring?: boolean;
       recurringPattern?: string;
       recurringEndDate?: string;
-    }
+    },
   ) {
     return this.request<{ appointment: any }>(`/appointments/${id}/follow-up`, {
       method: "POST",
@@ -195,7 +193,7 @@ class ApiClient {
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -208,7 +206,7 @@ class ApiClient {
 
   async getDoctorAvailability(doctorId: string, date: string) {
     return this.request<{ availableSlots: any[] }>(
-      `/appointments/availability/${doctorId}?date=${date}`
+      `/appointments/availability/${doctorId}?date=${date}`,
     );
   }
 
@@ -227,7 +225,7 @@ class ApiClient {
       });
     }
     return this.request<{ ehrs: any[]; count: number }>(
-      `/ehr/search?${query.toString()}`
+      `/ehr/search?${query.toString()}`,
     );
   }
 
@@ -248,7 +246,7 @@ class ApiClient {
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -265,7 +263,7 @@ class ApiClient {
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -275,7 +273,7 @@ class ApiClient {
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -294,7 +292,7 @@ class ApiClient {
       });
     }
     return this.request<{ prescriptions: any[] }>(
-      `/prescriptions?${query.toString()}`
+      `/prescriptions?${query.toString()}`,
     );
   }
 
@@ -320,7 +318,7 @@ class ApiClient {
       });
     }
     return this.request<{ labResults: any[] }>(
-      `/lab-results?${query.toString()}`
+      `/lab-results?${query.toString()}`,
     );
   }
 
@@ -344,7 +342,7 @@ class ApiClient {
       });
     }
     return this.request<{ sessions: any[] }>(
-      `/telemedicine?${query.toString()}`
+      `/telemedicine?${query.toString()}`,
     );
   }
 
@@ -370,7 +368,7 @@ class ApiClient {
 
   async getSessionJoinInfo(id: string) {
     return this.request<{ roomId: string; sessionType: string }>(
-      `/telemedicine/${id}/join`
+      `/telemedicine/${id}/join`,
     );
   }
 
@@ -424,7 +422,7 @@ class ApiClient {
   async getPatientDocuments(type?: string) {
     const query = type ? `?type=${type}` : "";
     return this.request<{ documents: any[] }>(
-      `/patient-portal/documents${query}`
+      `/patient-portal/documents${query}`,
     );
   }
 
@@ -459,7 +457,7 @@ class ApiClient {
       });
     }
     return this.request<{ users: any[]; pagination: any }>(
-      `/admin/users?${query.toString()}`
+      `/admin/users?${query.toString()}`,
     );
   }
 
@@ -499,7 +497,7 @@ class ApiClient {
       if (value) query.append(key, value);
     });
     return this.request<{ statistics: any; appointments: any[] }>(
-      `/reports/appointments?${query.toString()}`
+      `/reports/appointments?${query.toString()}`,
     );
   }
 
@@ -515,7 +513,7 @@ class ApiClient {
       });
     }
     return this.request<{ statistics: any; prescriptions: any[] }>(
-      `/reports/prescriptions?${query.toString()}`
+      `/reports/prescriptions?${query.toString()}`,
     );
   }
 
@@ -532,12 +530,8 @@ class ApiClient {
       });
     }
     return this.request<{ statistics: any; labResults: any[] }>(
-      `/reports/lab-results?${query.toString()}`
+      `/reports/lab-results?${query.toString()}`,
     );
-  }
-
-  async getDemographicsReport() {
-    return this.request<{ statistics: any }>("/reports/demographics");
   }
 
   // Saved Reports CRUD
@@ -554,7 +548,7 @@ class ApiClient {
       });
     }
     return this.request<{ reports: any[]; pagination: any }>(
-      `/reports/saved?${query.toString()}`
+      `/reports/saved?${query.toString()}`,
     );
   }
 
@@ -599,7 +593,7 @@ class ApiClient {
       });
     }
     return this.request<{ logs: any[]; pagination: any }>(
-      `/admin/audit-logs?${query.toString()}`
+      `/admin/audit-logs?${query.toString()}`,
     );
   }
 
@@ -615,7 +609,7 @@ class ApiClient {
       {
         method: "POST",
         body: JSON.stringify({ insuranceNumber }),
-      }
+      },
     );
   }
 

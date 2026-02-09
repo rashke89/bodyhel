@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  PieChart,
-  Pie,
   Cell,
-  ResponsiveContainer,
   Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
   Tooltip,
 } from "recharts";
 
@@ -34,9 +34,7 @@ export default function PieChartComponent({
 
   return (
     <div>
-      {title && (
-        <h3 className="font-semibold text-gray-900 mb-3">{title}</h3>
-      )}
+      {title && <h3 className="font-semibold text-gray-900 mb-3">{title}</h3>}
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
@@ -45,7 +43,7 @@ export default function PieChartComponent({
             cy="50%"
             labelLine={false}
             label={({ name, percent }) =>
-              `${name}: ${(percent * 100).toFixed(0)}%`
+              `${name}: ${((percent || 0) * 100).toFixed(0)}%`
             }
             outerRadius={80}
             fill="#8884d8"

@@ -14,14 +14,14 @@ export default function AppointmentDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
-    if (params.id) {
+    if (params?.id) {
       fetchAppointment();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   const fetchAppointment = async () => {
     try {
-      const response = await api.getAppointment(params.id as string);
+      const response = await api.getAppointment(params?.id as string);
       setAppointment(response.appointment);
     } catch (error) {
       console.error('Failed to fetch appointment:', error);

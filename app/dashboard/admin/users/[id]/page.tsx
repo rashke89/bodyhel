@@ -14,14 +14,14 @@ export default function UserDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
-    if (params.id) {
+    if (params?.id) {
       fetchUser();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   const fetchUser = async () => {
     try {
-      const response = await api.getUser(params.id as string);
+      const response = await api.getUser(params?.id as string);
       setUser(response.user);
     } catch (error) {
       console.error('Failed to fetch user:', error);

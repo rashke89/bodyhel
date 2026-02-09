@@ -296,9 +296,9 @@ export default function AdminReportsPage() {
                     {Object.keys(reports.statistics.byStatus || {}).length >
                       0 && (
                       <BarChartComponent
-                        data={Object.entries(reports.statistics.byStatus).map(
-                          ([name, value]) => ({ name, value }),
-                        )}
+                        data={Object.entries(
+                          reports?.statistics?.byStatus,
+                        ).map(([name, value]) => ({ name, value }))}
                         title="Po statusu"
                         color="#2C6975"
                       />
@@ -306,7 +306,7 @@ export default function AdminReportsPage() {
                     {Object.keys(reports.statistics.byType || {}).length >
                       0 && (
                       <PieChartComponent
-                        data={Object.entries(reports.statistics.byType).map(
+                        data={Object.entries(reports.statistics.byType || {}).map(
                           ([name, value]) => ({ name, value: value as number }),
                         )}
                         title="Po tipu pregleda"
@@ -317,7 +317,7 @@ export default function AdminReportsPage() {
                     1 && (
                     <div className="mt-6">
                       <LineChartComponent
-                        data={Object.entries(reports.statistics.dailyCount)
+                        data={Object.entries(reports.statistics.dailyCount || {})
                           .sort(([a], [b]) => a.localeCompare(b))
                           .map(([date, count]) => ({ date, pregledi: count }))}
                         lines={[
@@ -511,7 +511,7 @@ export default function AdminReportsPage() {
                   {Object.keys(reports.statistics.byGender || {}).length >
                     0 && (
                     <PieChartComponent
-                      data={Object.entries(reports.statistics.byGender).map(
+                      data={Object.entries(reports.statistics.byGender || {}).map(
                         ([name, value]) => ({
                           name:
                             name === "male"
@@ -527,7 +527,7 @@ export default function AdminReportsPage() {
                   )}
                   {reports.statistics.byAgeGroup && (
                     <PieChartComponent
-                      data={Object.entries(reports.statistics.byAgeGroup)
+                      data={Object.entries(reports.statistics.byAgeGroup || {})
                         .filter(([, value]) => (value as number) > 0)
                         .map(([name, value]) => ({
                           name,
@@ -539,7 +539,7 @@ export default function AdminReportsPage() {
                 </div>
                 {Object.keys(reports.statistics.byCity || {}).length > 0 && (
                   <BarChartComponent
-                    data={Object.entries(reports.statistics.byCity).map(
+                    data={Object.entries(reports.statistics.byCity || {}).map(
                       ([name, value]) => ({ name, value }),
                     )}
                     title="Po gradu"
