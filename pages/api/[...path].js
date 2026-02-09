@@ -1,4 +1,4 @@
-const apiApp = require('../../server/apiApp');
+import apiApp from '../../server/apiApp';
 
 export default function handler(req, res) {
   // Ensure routes work under /api
