@@ -26,7 +26,7 @@ const sampleUsers = [
   // Admin
   {
     email: "admin@bodyhel.com",
-    password: "Admin123!",
+    password: "admin123",
     firstName: "Admin",
     lastName: "Korisnik",
     role: "admin",
@@ -36,7 +36,7 @@ const sampleUsers = [
   // Doctors
   {
     email: "dr.petrovic@bodyhel.com",
-    password: "Doctor123!",
+    password: "doctor123",
     firstName: "Marko",
     lastName: "Petrović",
     role: "doctor",
@@ -48,7 +48,7 @@ const sampleUsers = [
   },
   {
     email: "dr.jovanovic@bodyhel.com",
-    password: "Doctor123!",
+    password: "doctor123",
     firstName: "Ana",
     lastName: "Jovanović",
     role: "doctor",
@@ -60,7 +60,7 @@ const sampleUsers = [
   },
   {
     email: "dr.nikolic@bodyhel.com",
-    password: "Doctor123!",
+    password: "doctor123",
     firstName: "Stefan",
     lastName: "Nikolić",
     role: "doctor",
@@ -73,7 +73,7 @@ const sampleUsers = [
   // Nurses
   {
     email: "sestra.maric@bodyhel.com",
-    password: "Nurse123!",
+    password: "nurse123",
     firstName: "Jelena",
     lastName: "Marić",
     role: "nurse",
@@ -86,7 +86,7 @@ const sampleUsers = [
   // Receptionist
   {
     email: "recepcionar@bodyhel.com",
-    password: "Recep123!",
+    password: "receptionist123",
     firstName: "Milan",
     lastName: "Stojanović",
     role: "receptionist",
@@ -96,7 +96,7 @@ const sampleUsers = [
   // Patients
   {
     email: "pacijent1@bodyhel.com",
-    password: "Patient123!",
+    password: "patient123!",
     firstName: "Petar",
     lastName: "Marković",
     role: "patient",
@@ -120,7 +120,7 @@ const sampleUsers = [
   },
   {
     email: "pacijent2@bodyhel.com",
-    password: "Patient123!",
+    password: "patient123!",
     firstName: "Jovana",
     lastName: "Đorđević",
     role: "patient",
@@ -144,7 +144,7 @@ const sampleUsers = [
   },
   {
     email: "pacijent3@bodyhel.com",
-    password: "Patient123!",
+    password: "patient123!",
     firstName: "Nikola",
     lastName: "Stojanović",
     role: "patient",
@@ -205,7 +205,7 @@ async function seedDatabase() {
       console.log(
         `   ✓ Kreiran ${user.role}: ${user.email}${
           user.patientId ? ` (${user.patientId})` : ""
-        }`
+        }`,
       );
     }
     console.log(`✅ Kreirano ${createdUsers.length} korisnika`);
@@ -274,7 +274,7 @@ async function seedDatabase() {
       });
       await ehr.save();
       console.log(
-        `   ✓ EHR kreiran za ${patient.firstName} ${patient.lastName}`
+        `   ✓ EHR kreiran za ${patient.firstName} ${patient.lastName}`,
       );
     }
     console.log("✅ EHR zapisi kreirani");
@@ -344,7 +344,7 @@ async function seedDatabase() {
       await appointment.save();
       createdAppointments.push(appointment);
       console.log(
-        `   ✓ Pregled kreiran za ${aptData.date.toLocaleDateString()}`
+        `   ✓ Pregled kreiran za ${aptData.date.toLocaleDateString()}`,
       );
     }
     console.log(`✅ Kreirano ${createdAppointments.length} pregleda`);
@@ -399,7 +399,7 @@ async function seedDatabase() {
     for (const prescData of prescriptions) {
       const prescription = new Prescription(prescData);
       prescription.ePrescriptionId = `EP${Date.now()}${Math.floor(
-        Math.random() * 1000
+        Math.random() * 1000,
       )}`;
       await prescription.save();
       console.log(`   ✓ Recept kreiran za ${prescData.medications[0].name}`);
@@ -544,10 +544,10 @@ async function seedDatabase() {
       console.error("\n   2. Ili koristite MongoDB Atlas (cloud):");
       console.error("      - Postavite MONGODB_URI u .env fajlu:");
       console.error(
-        "      MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/bodyhel"
+        "      MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/bodyhel",
       );
       console.error(
-        "\n   3. Proverite da li je MONGODB_URI ispravno postavljen u .env fajlu\n"
+        "\n   3. Proverite da li je MONGODB_URI ispravno postavljen u .env fajlu\n",
       );
     }
 
