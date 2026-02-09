@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-dark: #2c6975;
+  --primary: #6bb2a0;
+  --primary-light: #cde0c9;
+  --background-light: #e0ecde;
+}
+
+@layer base {
+  body {
+    @apply text-primary-dark bg-white;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-8 py-4 rounded-lg font-bold shadow-lg hover:bg-primary-dark transition-colors duration-300;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-primary-dark px-8 py-4 rounded-lg font-bold border-2 border-primary hover:bg-primary-light transition-colors duration-300;
+  }
+
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-16 lg:py-24;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary-dark to-primary;
+  }
+
+  .gradient-light {
+    @apply bg-gradient-to-r from-primary-light to-background-light;
+  }
+}
