@@ -9,6 +9,7 @@ const EHR = require("../server/models/EHR");
 const Prescription = require("../server/models/Prescription");
 const LabResult = require("../server/models/LabResult");
 const Message = require("../server/models/Message");
+const Organization = require("../server/models/Organization");
 
 // Load .env file if it exists
 require("dotenv").config({
@@ -23,14 +24,24 @@ const MONGODB_URI =
 
 // Sample data
 const sampleUsers = [
-  // Admin
+  // Super admin (nema organization)
   {
     email: "admin@bodyhel.com",
-    password: "admin123",
-    firstName: "Admin",
-    lastName: "Korisnik",
+    password: "admin1234!",
+    firstName: "Super",
+    lastName: "Admin",
     role: "admin",
     phone: "+381601234567",
+    isActive: true,
+  },
+  // Org admin (biće vezan za demo organizaciju)
+  {
+    email: "orgadmin@bodyhel.com",
+    password: "admin123",
+    firstName: "Org",
+    lastName: "Admin",
+    role: "admin",
+    phone: "+381601234568",
     isActive: true,
   },
   // Doctors
@@ -188,13 +199,43 @@ async function seedDatabase() {
     await Prescription.deleteMany({});
     await LabResult.deleteMany({});
     await Message.deleteMany({});
+    await Organization.deleteMany({});
     console.log("✅ Podaci obrisani");
+
+    // Create base organization for demo data
+    console.log("🏥 Kreiranje demo organizacije...");
+    const demoOrg = new Organization({
+      name: "BodyHel Demo Klinika",
+      legalName: "BodyHel Demo Klinika d.o.o.",
+      type: "clinic",
+      phone: "+381601234567",
+      email: "info@bodyhel-demo.com",
+      address: {
+        street: "Bulevar kralja Aleksandra 73",
+        city: "Beograd",
+        postalCode: "11000",
+        country: "Srbija",
+      },
+      isActive: true,
+    });
+    await demoOrg.save();
+    console.log(`✅ Demo organizacija kreirana: ${demoOrg.name}`);
 
     // Create users
     console.log("👥 Kreiranje korisnika...");
     const createdUsers = [];
-    for (const userData of sampleUsers) {
-      const user = new User(userData);
+    for (const [index, userData] of sampleUsers.entries()) {
+      // Prvi admin iz sampleUsers je "super admin" bez organizacije
+      const data = {
+        ...userData,
+        ...(index === 0
+          ? {}
+          : {
+              organization: demoOrg._id,
+            }),
+      };
+
+      const user = new User(data);
       await user.save();
       // Generate patient ID if patient (after save to ensure _id exists)
       if (user.role === "patient" && !user.patientId) {
@@ -205,13 +246,18 @@ async function seedDatabase() {
       console.log(
         `   ✓ Kreiran ${user.role}: ${user.email}${
           user.patientId ? ` (${user.patientId})` : ""
-        }`,
+        }`
       );
     }
     console.log(`✅ Kreirano ${createdUsers.length} korisnika`);
 
     // Find users by role
-    const admin = createdUsers.find((u) => u.role === "admin");
+    const superAdmin = createdUsers.find(
+      (u) => u.role === "admin" && !u.organization
+    );
+    const orgAdmin = createdUsers.find(
+      (u) => u.role === "admin" && u.organization
+    );
     const doctors = createdUsers.filter((u) => u.role === "doctor");
     const nurses = createdUsers.filter((u) => u.role === "nurse");
     const patients = createdUsers.filter((u) => u.role === "patient");
@@ -222,7 +268,8 @@ async function seedDatabase() {
     for (const patient of patients) {
       const ehr = new EHR({
         patient: patient._id,
-        createdBy: admin._id,
+        createdBy: orgAdmin?._id || superAdmin._id,
+        organization: demoOrg._id,
         diagnoses: [
           {
             code: "I10",
@@ -274,7 +321,7 @@ async function seedDatabase() {
       });
       await ehr.save();
       console.log(
-        `   ✓ EHR kreiran za ${patient.firstName} ${patient.lastName}`,
+        `   ✓ EHR kreiran za ${patient.firstName} ${patient.lastName}`
       );
     }
     console.log("✅ EHR zapisi kreirani");
@@ -299,6 +346,7 @@ async function seedDatabase() {
         duration: 30,
         status: "scheduled",
         reason: "Kontrola krvnog pritiska",
+        organization: demoOrg._id,
       },
       {
         patient: patients[1]._id,
@@ -311,6 +359,7 @@ async function seedDatabase() {
         duration: 30,
         status: "scheduled",
         reason: "Redovni pregled",
+        organization: demoOrg._id,
       },
       {
         patient: patients[0]._id,
@@ -323,6 +372,7 @@ async function seedDatabase() {
         duration: 30,
         status: "scheduled",
         reason: "Online konsultacija",
+        organization: demoOrg._id,
       },
       {
         patient: patients[2]._id,
@@ -335,6 +385,7 @@ async function seedDatabase() {
         duration: 30,
         status: "completed",
         reason: "Pregled",
+        organization: demoOrg._id,
       },
     ];
 
@@ -344,7 +395,7 @@ async function seedDatabase() {
       await appointment.save();
       createdAppointments.push(appointment);
       console.log(
-        `   ✓ Pregled kreiran za ${aptData.date.toLocaleDateString()}`,
+        `   ✓ Pregled kreiran za ${aptData.date.toLocaleDateString()}`
       );
     }
     console.log(`✅ Kreirano ${createdAppointments.length} pregleda`);
@@ -375,6 +426,7 @@ async function seedDatabase() {
         issueDate: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
         status: "active",
         notes: "Kontrola za 30 dana",
+        organization: demoOrg._id,
       },
       {
         patient: patients[1]._id,
@@ -393,13 +445,14 @@ async function seedDatabase() {
         ],
         issueDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000),
         status: "active",
+        organization: demoOrg._id,
       },
     ];
 
     for (const prescData of prescriptions) {
       const prescription = new Prescription(prescData);
       prescription.ePrescriptionId = `EP${Date.now()}${Math.floor(
-        Math.random() * 1000,
+        Math.random() * 1000
       )}`;
       await prescription.save();
       console.log(`   ✓ Recept kreiran za ${prescData.medications[0].name}`);
@@ -447,6 +500,7 @@ async function seedDatabase() {
         interpretation: "Normalna krvna slika",
         reviewedBy: doctors[0]._id,
         reviewedAt: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
+        organization: demoOrg._id,
       },
       {
         patient: patients[1]._id,
@@ -456,6 +510,7 @@ async function seedDatabase() {
         testName: "Glukoza u krvi",
         orderedDate: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
         status: "ordered",
+        organization: demoOrg._id,
       },
     ];
 
@@ -478,6 +533,7 @@ async function seedDatabase() {
         type: "message",
         priority: "normal",
         read: false,
+        organization: demoOrg._id,
       },
       {
         sender: doctors[1]._id,
@@ -488,6 +544,7 @@ async function seedDatabase() {
         type: "reminder",
         priority: "normal",
         read: false,
+        organization: demoOrg._id,
       },
       {
         sender: patients[0]._id,
@@ -499,6 +556,7 @@ async function seedDatabase() {
         priority: "normal",
         read: true,
         readAt: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
+        organization: demoOrg._id,
       },
     ];
 
@@ -544,10 +602,10 @@ async function seedDatabase() {
       console.error("\n   2. Ili koristite MongoDB Atlas (cloud):");
       console.error("      - Postavite MONGODB_URI u .env fajlu:");
       console.error(
-        "      MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/bodyhel",
+        "      MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/bodyhel"
       );
       console.error(
-        "\n   3. Proverite da li je MONGODB_URI ispravno postavljen u .env fajlu\n",
+        "\n   3. Proverite da li je MONGODB_URI ispravno postavljen u .env fajlu\n"
       );
     }
 

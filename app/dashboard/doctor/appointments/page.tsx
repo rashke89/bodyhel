@@ -15,6 +15,7 @@ export default function DoctorAppointmentsPage() {
   });
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
   useEffect(() => {
     fetchAppointments();
@@ -67,6 +68,26 @@ export default function DoctorAppointmentsPage() {
     });
   }, [appointments, search]);
 
+  const groupedByStatus = useMemo(() => {
+    const groups: Record<string, any[]> = {
+      scheduled: [],
+      confirmed: [],
+      "in-progress": [],
+      completed: [],
+      cancelled: [],
+      "no-show": [],
+      rescheduled: [],
+    };
+    filteredAppointments.forEach((apt) => {
+      const status = apt.status || "scheduled";
+      if (!groups[status]) {
+        groups[status] = [];
+      }
+      groups[status].push(apt);
+    });
+    return groups;
+  }, [filteredAppointments]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -74,6 +95,28 @@ export default function DoctorAppointmentsPage() {
           <div>
             <h1 className="text-3xl font-bold text-[#2C6975]">Moji pregledi</h1>
             <p className="text-gray-600 mt-1">Pregled i upravljanje vašim pregledima</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`px-3 py-1 text-sm rounded-lg border ${
+                viewMode === "table"
+                  ? "bg-[#6BB2A0] text-white border-[#6BB2A0]"
+                  : "bg-white text-gray-700 border-gray-300"
+              }`}
+            >
+              Tabela
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`px-3 py-1 text-sm rounded-lg border ${
+                viewMode === "kanban"
+                  ? "bg-[#6BB2A0] text-white border-[#6BB2A0]"
+                  : "bg-white text-gray-700 border-gray-300"
+              }`}
+            >
+              Kanban
+            </button>
           </div>
         </div>
 
@@ -162,7 +205,11 @@ export default function DoctorAppointmentsPage() {
 
         {loading ? (
           <div className="text-center py-12">Učitavanje...</div>
-        ) : filteredAppointments.length > 0 ? (
+        ) : filteredAppointments.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <p className="text-gray-500 text-lg">Nema pregleda za prikaz</p>
+          </div>
+        ) : viewMode === "table" ? (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -260,8 +307,132 @@ export default function DoctorAppointmentsPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <p className="text-gray-500 text-lg">Nema pregleda za prikaz</p>
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { key: "scheduled", label: "Zakazani", color: "border-yellow-300" },
+                { key: "confirmed", label: "Potvrđeni", color: "border-green-300" },
+                { key: "in-progress", label: "U toku", color: "border-blue-300" },
+                { key: "completed", label: "Završeni", color: "border-gray-300" },
+                { key: "cancelled", label: "Otkazani", color: "border-red-300" },
+              ].map((column) => (
+                <div
+                  key={column.key}
+                  className={`bg-gray-50 rounded-lg border ${column.color} flex flex-col max-h-[480px]`}
+                >
+                  <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-700 uppercase">
+                      {column.label}
+                    </p>
+                    <span className="text-xs text-gray-500">
+                      {groupedByStatus[column.key]?.length || 0}
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                    {groupedByStatus[column.key]?.map((apt) => (
+                      <div
+                        key={apt._id}
+                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {apt.patient?.firstName} {apt.patient?.lastName}
+                            </p>
+                            {apt.patient?.patientId && (
+                              <p className="text-xs text-gray-500">
+                                ID: {apt.patient.patientId}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right text-xs text-gray-500">
+                            <p>
+                              {new Date(apt.date).toLocaleDateString("sr-RS", {
+                                day: "numeric",
+                                month: "short",
+                              })}
+                            </p>
+                            <p>
+                              {apt.startTime} - {apt.endTime}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600 line-clamp-2">
+                          {apt.reason || "Bez dodatnog opisa"}
+                        </p>
+                        <div className="flex items-center justify-between space-x-2 pt-1">
+                          <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] capitalize">
+                            {apt.appointmentType}
+                          </span>
+                          <div className="flex space-x-1">
+                            {apt.status !== "scheduled" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateStatus(apt._id, "scheduled")
+                                }
+                                className="px-2 py-1 text-[11px] border border-gray-200 rounded hover:bg-gray-50"
+                              >
+                                Zakazan
+                              </button>
+                            )}
+                            {apt.status !== "confirmed" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateStatus(apt._id, "confirmed")
+                                }
+                                className="px-2 py-1 text-[11px] border border-gray-200 rounded hover:bg-gray-50"
+                              >
+                                Potvrdi
+                              </button>
+                            )}
+                            {apt.status !== "in-progress" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateStatus(apt._id, "in-progress")
+                                }
+                                className="px-2 py-1 text-[11px] border border-gray-200 rounded hover:bg-gray-50"
+                              >
+                                U toku
+                              </button>
+                            )}
+                            {apt.status !== "completed" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateStatus(apt._id, "completed")
+                                }
+                                className="px-2 py-1 text-[11px] border border-gray-200 rounded hover:bg-gray-50"
+                              >
+                                Završi
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {apt.patient && (
+                          <div className="pt-1">
+                            <Link
+                              href={`/dashboard/doctor/patients/${apt.patient._id}`}
+                              className="inline-flex items-center text-[11px] text-[#2C6975] hover:underline"
+                            >
+                              Otvori EHR →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {(!groupedByStatus[column.key] ||
+                      groupedByStatus[column.key].length === 0) && (
+                      <p className="text-xs text-gray-400 text-center py-4">
+                        Nema pregleda u ovoj koloni.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

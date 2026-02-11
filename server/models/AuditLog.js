@@ -45,6 +45,11 @@ const auditLogSchema = new mongoose.Schema(
     metadata: {
       type: mongoose.Schema.Types.Mixed,
     },
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+    },
   },
   {
     timestamps: true,

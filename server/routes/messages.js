@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const { authenticate } = require('../middleware/auth');
 
 // Get messages (inbox)
@@ -107,7 +108,8 @@ router.post('/', authenticate, async (req, res) => {
       type: type || 'message',
       priority: priority || 'normal',
       relatedTo,
-      attachments: attachments || []
+      attachments: attachments || [],
+      organization: req.user.organization || recipientUser.organization || undefined
     });
 
     await message.save();
@@ -116,9 +118,34 @@ router.post('/', authenticate, async (req, res) => {
       .populate('sender', 'firstName lastName email role')
       .populate('recipient', 'firstName lastName email role');
 
+    // Create notification for recipient
+    try {
+      await new Notification({
+        user: populatedMessage.recipient._id,
+        type: 'message',
+        title:
+          populatedMessage.subject ||
+          `Nova poruka od ${populatedMessage.sender.firstName} ${populatedMessage.sender.lastName}`,
+        body: populatedMessage.content?.slice(0, 120),
+        relatedResource: {
+          resourceType: 'message',
+          resourceId: populatedMessage._id,
+        },
+        link:
+          populatedMessage.recipient.role === 'doctor' ||
+          populatedMessage.recipient.role === 'nurse'
+            ? '/dashboard/doctor/messages'
+            : populatedMessage.recipient.role === 'admin'
+              ? '/dashboard/admin/messages'
+              : '/dashboard/patient/messages',
+      }).save();
+    } catch (notifyErr) {
+      console.error('Send message notification error:', notifyErr);
+    }
+
     res.status(201).json({
       message: 'Message sent successfully',
-      message: populatedMessage
+      message: populatedMessage,
     });
   } catch (error) {
     console.error('Send message error:', error);

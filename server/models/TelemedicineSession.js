@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const telemedicineSessionSchema = new mongoose.Schema({
+  organization: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Organization",
+    index: true,
+  },
   appointment: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Appointment',

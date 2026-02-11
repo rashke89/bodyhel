@@ -98,6 +98,30 @@ app.use("/patient-portal", require("./routes/patient-portal"));
 app.use("/admin", auditLog("admin", "admin"), require("./routes/admin"));
 app.use("/reports", auditLog("report", "report"), require("./routes/reports"));
 app.use(
+  "/notifications",
+  authenticate,
+  auditLog("notification", "notification"),
+  require("./routes/notifications"),
+);
+app.use(
+  "/search",
+  authenticate,
+  auditLog("search", "search"),
+  require("./routes/search"),
+);
+app.use(
+  "/templates",
+  authenticate,
+  auditLog("template", "template"),
+  require("./routes/templates"),
+);
+app.use(
+  "/organizations",
+  authenticate,
+  auditLog("organization", "organization"),
+  require("./routes/organizations"),
+);
+app.use(
   "/integrations",
   auditLog("integration", "integration"),
   require("./routes/integrations"),

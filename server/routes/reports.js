@@ -25,9 +25,13 @@ router.get('/export', authorize('admin'), async (req, res) => {
       dateQuery.$lte = new Date(endDate);
     }
 
+    const orgFilter = req.user.organization
+      ? { organization: req.user.organization }
+      : {};
+
     switch (reportType) {
       case 'appointments': {
-        const query = startDate && endDate ? { date: dateQuery } : {};
+        const query = startDate && endDate ? { date: dateQuery, ...orgFilter } : { ...orgFilter };
         const appointments = await Appointment.find(query)
           .populate('doctor', 'firstName lastName');
         statistics = { total: appointments.length, byStatus: {}, byType: {}, byDoctor: {} };
@@ -40,7 +44,7 @@ router.get('/export', authorize('admin'), async (req, res) => {
         break;
       }
       case 'prescriptions': {
-        const query = startDate && endDate ? { issueDate: dateQuery } : {};
+        const query = startDate && endDate ? { issueDate: dateQuery, ...orgFilter } : { ...orgFilter };
         const prescriptions = await Prescription.find(query)
           .populate('doctor', 'firstName lastName');
         statistics = { total: prescriptions.length, byStatus: {}, medicationsPrescribed: {} };
@@ -53,7 +57,7 @@ router.get('/export', authorize('admin'), async (req, res) => {
         break;
       }
       case 'lab-results': {
-        const query = startDate && endDate ? { orderedDate: dateQuery } : {};
+        const query = startDate && endDate ? { orderedDate: dateQuery, ...orgFilter } : { ...orgFilter };
         const labResults = await LabResult.find(query);
         statistics = {
           total: labResults.length,
@@ -106,6 +110,10 @@ router.get('/appointments', async (req, res) => {
       query.patient = req.user._id;
     } else if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (req.user.role === 'admin' && req.user.organization) {
+      query.organization = req.user.organization;
     }
 
     const appointments = await Appointment.find(query)
@@ -167,6 +175,10 @@ router.get('/prescriptions', authorize('doctor', 'admin'), async (req, res) => {
       query.doctor = req.user._id;
     }
 
+    if (req.user.role === 'admin' && req.user.organization) {
+      query.organization = req.user.organization;
+    }
+
     const prescriptions = await Prescription.find(query)
       .populate('patient', 'firstName lastName')
       .populate('doctor', 'firstName lastName specialization');
@@ -219,6 +231,10 @@ router.get('/lab-results', authorize('doctor', 'nurse', 'admin'), async (req, re
     if (testType) query.testType = testType;
     if (status) query.status = status;
 
+    if (req.user.role === 'admin' && req.user.organization) {
+      query.organization = req.user.organization;
+    }
+
     const labResults = await LabResult.find(query)
       .populate('patient', 'firstName lastName')
       .populate('orderedBy', 'firstName lastName');
@@ -249,7 +265,10 @@ router.get('/lab-results', authorize('doctor', 'nurse', 'admin'), async (req, re
 // Get patient demographics report (admin only)
 router.get('/demographics', authorize('admin'), async (req, res) => {
   try {
-    const patients = await User.find({ role: 'patient' }).select('dateOfBirth gender address');
+    const orgFilter = req.user.organization
+      ? { organization: req.user.organization }
+      : {};
+    const patients = await User.find({ role: 'patient', ...orgFilter }).select('dateOfBirth gender address');
 
     const stats = {
       total: patients.length,
@@ -300,6 +319,10 @@ router.get('/saved', authorize('admin'), async (req, res) => {
   try {
     const { reportType, status, limit = 50, page = 1 } = req.query;
     const query = { createdBy: req.user._id };
+
+    if (req.user.organization) {
+      query.organization = req.user.organization;
+    }
 
     if (reportType) query.reportType = reportType;
     if (status) query.status = status;
@@ -364,6 +387,7 @@ router.post('/saved', authorize('admin'), async (req, res) => {
       tags: tags || [],
       notes,
       createdBy: req.user._id,
+      organization: req.user.organization || undefined,
       status: 'draft'
     });
 

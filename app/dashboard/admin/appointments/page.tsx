@@ -88,22 +88,26 @@ export default function AdminAppointmentsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-[#2C6975]">Upravljanje pregledima</h1>
-            <p className="text-gray-600 mt-1">Pregled i upravljanje svim pregledima u sistemu</p>
+      <div className="space-y-6 min-w-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold leading-tight text-[#2C6975] break-words sm:text-3xl">
+              Upravljanje pregledima
+            </h1>
+            <p className="text-gray-600 mt-1 break-words">
+              Pregled i upravljanje svim pregledima u sistemu
+            </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <button
               onClick={() => router.push('/dashboard/admin/appointments/calendar')}
-              className="px-4 py-2 border border-[#6BB2A0] text-[#6BB2A0] rounded-lg hover:bg-[#e3f3ef]"
+              className="w-full px-4 py-2 border border-[#6BB2A0] text-[#6BB2A0] rounded-lg hover:bg-[#e3f3ef] sm:w-auto"
             >
               📆 Kalendar
             </button>
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="px-4 py-2 bg-[#6BB2A0] text-white rounded-lg hover:bg-[#5a9d8c]"
+              className="w-full px-4 py-2 bg-[#6BB2A0] text-white rounded-lg hover:bg-[#5a9d8c] sm:w-auto"
             >
               + Zakaži pregled
             </button>
@@ -188,7 +192,7 @@ export default function AdminAppointmentsPage() {
         ) : appointments.length > 0 ? (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-[1200px] divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum i vreme</th>

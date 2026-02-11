@@ -9,7 +9,7 @@ const auditLog = require('../middleware/audit');
 // Register new user
 router.post('/register', validationRules.register, async (req, res) => {
   try {
-    const { email, password, firstName, lastName, role, phone, dateOfBirth, gender, address, specialization, licenseNumber, department, bloodType, emergencyContact, insuranceNumber } = req.body;
+    const { email, password, firstName, lastName, role, phone, dateOfBirth, gender, address, specialization, licenseNumber, department, bloodType, emergencyContact, insuranceNumber, organization } = req.body;
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
@@ -33,7 +33,8 @@ router.post('/register', validationRules.register, async (req, res) => {
       department,
       bloodType,
       emergencyContact,
-      insuranceNumber
+      insuranceNumber,
+      organization: organization || undefined
     });
 
     // Generate patient ID if patient
@@ -55,7 +56,8 @@ router.post('/register', validationRules.register, async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        patientId: user.patientId
+        patientId: user.patientId,
+        organization: user.organization,
       },
       token,
       refreshToken
@@ -105,7 +107,8 @@ router.post('/login', validationRules.login, async (req, res) => {
         lastName: user.lastName,
         role: user.role,
         patientId: user.patientId,
-        specialization: user.specialization
+        specialization: user.specialization,
+        organization: user.organization,
       },
       token,
       refreshToken

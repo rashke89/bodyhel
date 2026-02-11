@@ -130,18 +130,20 @@ export default function AdminReportsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-[#2C6975]">Izveštaji</h1>
-            <p className="text-gray-600 mt-1">Statistika i analiza sistema</p>
+      <div className="space-y-6 min-w-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold leading-tight text-[#2C6975] break-words sm:text-3xl">
+              Izveštaji
+            </h1>
+            <p className="text-gray-600 mt-1 break-words">Statistika i analiza sistema</p>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             {activeTab !== "saved" && activeTab !== "demographics" && (
               <button
                 onClick={handleExportPDF}
                 disabled={exporting}
-                className="px-4 py-2 bg-[#2C6975] text-white rounded-lg hover:bg-[#245a64] disabled:opacity-50"
+                className="w-full px-4 py-2 bg-[#2C6975] text-white rounded-lg hover:bg-[#245a64] disabled:opacity-50 sm:w-auto"
               >
                 {exporting ? "Izvoz..." : "Izvezi PDF"}
               </button>
@@ -149,7 +151,7 @@ export default function AdminReportsPage() {
             {activeTab === "saved" && (
               <button
                 onClick={() => setCreateModalOpen(true)}
-                className="px-4 py-2 bg-[#6BB2A0] text-white rounded-lg hover:bg-[#5a9d8c]"
+                className="w-full px-4 py-2 bg-[#6BB2A0] text-white rounded-lg hover:bg-[#5a9d8c] sm:w-auto"
               >
                 + Kreiraj izveštaj
               </button>
@@ -159,8 +161,8 @@ export default function AdminReportsPage() {
 
         {/* Date Range Filter */}
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <label className="text-sm font-medium text-gray-700 flex flex-col gap-2 sm:flex-row sm:items-center">
               Od:
               <input
                 type="date"
@@ -168,10 +170,10 @@ export default function AdminReportsPage() {
                 onChange={(e) =>
                   setDateRange({ ...dateRange, startDate: e.target.value })
                 }
-                className="ml-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6BB2A0]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6BB2A0] sm:w-auto sm:ml-2"
               />
             </label>
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-gray-700 flex flex-col gap-2 sm:flex-row sm:items-center">
               Do:
               <input
                 type="date"
@@ -179,15 +181,15 @@ export default function AdminReportsPage() {
                 onChange={(e) =>
                   setDateRange({ ...dateRange, endDate: e.target.value })
                 }
-                className="ml-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6BB2A0]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6BB2A0] sm:w-auto sm:ml-2"
               />
             </label>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="flex w-max min-w-full space-x-6 sm:space-x-8">
             {[
               { id: "appointments", label: "Pregledi", icon: "📅" },
               { id: "prescriptions", label: "Recepti", icon: "💊" },
@@ -198,7 +200,7 @@ export default function AdminReportsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center space-x-2 ${
                   activeTab === tab.id
                     ? "border-[#6BB2A0] text-[#6BB2A0]"
                     : "border-transparent text-gray-500 hover:text-gray-700"

@@ -107,7 +107,8 @@ router.post('/', authenticate, authorize('doctor', 'admin'), async (req, res) =>
       testType,
       testName,
       orderedDate: new Date(),
-      status: 'ordered'
+      status: 'ordered',
+      organization: req.user.organization || undefined
     });
 
     await labResult.save();

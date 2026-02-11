@@ -8,9 +8,20 @@ interface AppointmentModalProps {
   onClose: () => void;
   onSave: () => void;
   appointment?: any;
+  initialData?: {
+    date?: string;
+    startTime?: string;
+    duration?: number;
+  };
 }
 
-export default function AppointmentModal({ isOpen, onClose, onSave, appointment }: AppointmentModalProps) {
+export default function AppointmentModal({
+  isOpen,
+  onClose,
+  onSave,
+  appointment,
+  initialData,
+}: AppointmentModalProps) {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
@@ -61,15 +72,17 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment 
         recurringEndDate: appointment.recurringEndDate ? new Date(appointment.recurringEndDate).toISOString().split('T')[0] : '',
       });
     } else {
+      const startTime = initialData?.startTime || '';
+      const duration = initialData?.duration || 30;
       setFormData({
         patient: '',
         doctor: '',
         appointmentType: 'consultation',
         appointmentCategory: 'ambulatory',
-        date: '',
-        startTime: '',
-        endTime: '',
-        duration: 30,
+        date: initialData?.date || '',
+        startTime,
+        endTime: calculateEndTime(startTime, duration),
+        duration,
         status: 'scheduled',
         reason: '',
         notes: '',
@@ -80,7 +93,7 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment 
         recurringEndDate: '',
       });
     }
-  }, [appointment, isOpen]);
+  }, [appointment, isOpen, initialData]);
 
   const fetchDoctors = async () => {
     try {

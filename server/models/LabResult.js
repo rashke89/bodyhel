@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const labResultSchema = new mongoose.Schema(
   {
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+    },
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

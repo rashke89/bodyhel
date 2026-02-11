@@ -30,7 +30,8 @@ router.get('/patient/:patientId', authenticate, async (req, res) => {
     if (!ehr) {
       ehr = new EHR({
         patient: patientId,
-        createdBy: req.user._id
+        createdBy: req.user._id,
+        organization: req.user.organization || undefined,
       });
       await ehr.save();
     }

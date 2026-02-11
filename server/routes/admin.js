@@ -21,36 +21,63 @@ router.get('/dashboard', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // User statistics
-    const totalUsers = await User.countDocuments();
-    const totalPatients = await User.countDocuments({ role: 'patient' });
-    const totalDoctors = await User.countDocuments({ role: 'doctor' });
-    const activeUsers = await User.countDocuments({ isActive: true });
+    const orgFilter = req.user.organization
+      ? { organization: req.user.organization }
+      : {};
+
+    // User statistics (scoped po organizaciji ako postoji)
+    const totalUsers = await User.countDocuments(orgFilter);
+    const totalPatients = await User.countDocuments({
+      role: 'patient',
+      ...orgFilter,
+    });
+    const totalDoctors = await User.countDocuments({
+      role: 'doctor',
+      ...orgFilter,
+    });
+    const activeUsers = await User.countDocuments({
+      isActive: true,
+      ...orgFilter,
+    });
 
     // Appointment statistics
-    const totalAppointments = await Appointment.countDocuments();
+    const totalAppointments = await Appointment.countDocuments(orgFilter);
     const todayAppointments = await Appointment.countDocuments({
-      date: { $gte: today, $lt: tomorrow }
+      ...orgFilter,
+      date: { $gte: today, $lt: tomorrow },
     });
     const upcomingAppointments = await Appointment.countDocuments({
+      ...orgFilter,
       date: { $gte: new Date() },
-      status: { $in: ['scheduled', 'confirmed'] }
+      status: { $in: ['scheduled', 'confirmed'] },
     });
 
     // EHR statistics
-    const totalEHRs = await EHR.countDocuments();
+    const totalEHRs = await EHR.countDocuments(orgFilter);
 
     // Prescription statistics
-    const totalPrescriptions = await Prescription.countDocuments();
-    const activePrescriptions = await Appointment.countDocuments({ status: 'active' });
+    const totalPrescriptions = await Prescription.countDocuments(orgFilter);
+    const activePrescriptions = await Prescription.countDocuments({
+      status: 'active',
+      ...orgFilter,
+    });
 
     // Lab results statistics
-    const totalLabResults = await LabResult.countDocuments();
-    const pendingLabResults = await LabResult.countDocuments({ status: { $in: ['ordered', 'collected'] } });
+    const totalLabResults = await LabResult.countDocuments(orgFilter);
+    const pendingLabResults = await LabResult.countDocuments({
+      status: { $in: ['ordered', 'collected'] },
+      ...orgFilter,
+    });
 
-    // Messages
-    const totalMessages = await Message.countDocuments();
-    const unreadMessages = await Message.countDocuments({ read: false });
+    // Messages (scoped po organizaciji ako setovana)
+    const messageFilter = req.user.organization
+      ? { organization: req.user.organization }
+      : {};
+    const totalMessages = await Message.countDocuments(messageFilter);
+    const unreadMessages = await Message.countDocuments({
+      ...messageFilter,
+      read: false,
+    });
 
     res.json({
       users: {
@@ -91,6 +118,10 @@ router.get('/users', async (req, res) => {
   try {
     const { role, isActive, search, limit = 50, page = 1 } = req.query;
     const query = {};
+
+    if (req.user.organization) {
+      query.organization = req.user.organization;
+    }
 
     if (role) query.role = role;
     if (isActive !== undefined) query.isActive = isActive === 'true';
@@ -155,7 +186,8 @@ router.post('/users', async (req, res) => {
       bloodType,
       insuranceNumber,
       emergencyContact,
-      isActive: true
+      isActive: true,
+      organization: req.user.organization || undefined
     });
 
     // Generate patient ID if patient
@@ -245,6 +277,10 @@ router.get('/audit-logs', async (req, res) => {
   try {
     const { user, action, resource, startDate, endDate, limit = 100, page = 1 } = req.query;
     const query = {};
+
+    if (req.user.organization) {
+      query.organization = req.user.organization;
+    }
 
     if (user) query.user = user;
     if (action) query.action = action;

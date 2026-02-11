@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardLayout from "@/components/DashboardLayout";
+import AppointmentModal from "@/components/AppointmentModal";
 import { api } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 
@@ -27,8 +28,17 @@ interface CalendarAppointment {
 export default function AdminAppointmentsCalendarPage() {
   const [appointments, setAppointments] = useState<CalendarAppointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<CalendarAppointment | null>(null);
+  const [createInitialData, setCreateInitialData] = useState<{
+    date?: string;
+    startTime?: string;
+    duration?: number;
+  }>({});
 
   useEffect(() => {
     fetchAppointmentsForRange();
@@ -78,6 +88,20 @@ export default function AdminAppointmentsCalendarPage() {
 
   const goToday = () => {
     setCurrentDate(new Date());
+  };
+
+  const openEditModal = (appointment: CalendarAppointment) => {
+    setSelectedAppointment(appointment);
+    setEditModalOpen(true);
+  };
+
+  const openCreateModalAt = (date: Date, startTime: string = "08:00") => {
+    setCreateInitialData({
+      date: formatDateForInput(date),
+      startTime,
+      duration: 30,
+    });
+    setCreateModalOpen(true);
   };
 
   const title = useMemo(() => {
@@ -158,14 +182,57 @@ export default function AdminAppointmentsCalendarPage() {
           {loading ? (
             <div className="text-center py-12 text-gray-600">Učitavanje...</div>
           ) : viewMode === "month" ? (
-            <MonthView weeks={weeks} />
+            <MonthView
+              weeks={weeks}
+              onAppointmentClick={openEditModal}
+              onEmptyDayClick={openCreateModalAt}
+            />
           ) : (
-            <WeekView weekDays={weekDays} slots={weekSlots} />
+            <WeekView
+              weekDays={weekDays}
+              slots={weekSlots}
+              onAppointmentClick={openEditModal}
+              onEmptySlotClick={openCreateModalAt}
+            />
           )}
         </div>
       </div>
+
+      <AppointmentModal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setCreateInitialData({});
+        }}
+        onSave={() => {
+          fetchAppointmentsForRange();
+          setCreateModalOpen(false);
+          setCreateInitialData({});
+        }}
+        initialData={createInitialData}
+      />
+      <AppointmentModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedAppointment(null);
+        }}
+        onSave={() => {
+          fetchAppointmentsForRange();
+          setEditModalOpen(false);
+          setSelectedAppointment(null);
+        }}
+        appointment={selectedAppointment}
+      />
     </DashboardLayout>
   );
+}
+
+function formatDateForInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function getDateRange(date: Date, viewMode: ViewMode) {
@@ -276,13 +343,13 @@ function buildCalendar(
     };
   });
 
-  // Time slots from 08:00 to 18:00, every 60 min
+  // Time slots from 08:00 to 22:00, every 60 min
   const slots: {
     time: string;
     items: { [dayKey: string]: CalendarAppointment[] };
   }[] = [];
 
-  for (let hour = 8; hour <= 18; hour++) {
+  for (let hour = 8; hour <= 22; hour++) {
     const timeLabel = `${hour.toString().padStart(2, "0")}:00`;
     const slot: {
       time: string;
@@ -306,6 +373,8 @@ function buildCalendar(
 
 function MonthView({
   weeks,
+  onAppointmentClick,
+  onEmptyDayClick,
 }: {
   weeks: {
     days: {
@@ -315,6 +384,8 @@ function MonthView({
       appointments: CalendarAppointment[];
     }[];
   }[];
+  onAppointmentClick: (appointment: CalendarAppointment) => void;
+  onEmptyDayClick: (date: Date, startTime?: string) => void;
 }) {
   const dayNames = ["Pon", "Uto", "Sre", "Čet", "Pet", "Sub", "Ned"];
 
@@ -333,9 +404,10 @@ function MonthView({
             {week.days.map((day) => (
               <div
                 key={day.key}
+                onClick={() => onEmptyDayClick(day.date, "08:00")}
                 className={`min-h-[90px] bg-white p-1.5 flex flex-col ${
                   day.isCurrentMonth ? "" : "bg-gray-50 text-gray-400"
-                }`}
+                } cursor-pointer hover:bg-[#f6fbf9]`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-semibold">
@@ -349,13 +421,18 @@ function MonthView({
                 </div>
                 <div className="space-y-0.5 overflow-hidden">
                   {day.appointments.slice(0, 3).map((apt) => (
-                    <div
+                    <button
                       key={apt._id}
-                      className="text-[10px] px-1 py-0.5 rounded bg-primary-light/40 text-primary-dark truncate"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAppointmentClick(apt);
+                      }}
+                      className="w-full text-left text-[10px] px-1 py-0.5 rounded bg-primary-light/40 text-primary-dark truncate hover:bg-primary-light/70"
                     >
                       {apt.startTime} {apt.patient?.firstName}{" "}
                       {apt.patient?.lastName}
-                    </div>
+                    </button>
                   ))}
                   {day.appointments.length > 3 && (
                     <div className="text-[10px] text-gray-500">
@@ -375,6 +452,8 @@ function MonthView({
 function WeekView({
   weekDays,
   slots,
+  onAppointmentClick,
+  onEmptySlotClick,
 }: {
   weekDays: {
     date: Date;
@@ -385,6 +464,8 @@ function WeekView({
     time: string;
     items: { [dayKey: string]: CalendarAppointment[] };
   }[];
+  onAppointmentClick: (appointment: CalendarAppointment) => void;
+  onEmptySlotClick: (date: Date, startTime?: string) => void;
 }) {
   const dayNames = ["Pon", "Uto", "Sre", "Čet", "Pet", "Sub", "Ned"];
 
@@ -419,13 +500,19 @@ function WeekView({
                 return (
                   <div
                     key={d.key}
+                    onClick={() => onEmptySlotClick(d.date, slot.time)}
                     className="border-l border-gray-100 px-1 py-1 min-h-[40px]"
                   >
                     <div className="space-y-1">
                       {items.map((apt) => (
-                        <div
+                        <button
                           key={apt._id}
-                          className="px-1 py-0.5 rounded bg-primary-light/60 text-primary-dark text-[10px] leading-tight"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAppointmentClick(apt);
+                          }}
+                          className="w-full text-left px-1 py-0.5 rounded bg-primary-light/60 text-primary-dark text-[10px] leading-tight hover:bg-primary-light/80"
                         >
                           <div className="font-semibold truncate">
                             {apt.patient?.firstName} {apt.patient?.lastName}
@@ -433,7 +520,7 @@ function WeekView({
                           <div className="truncate">
                             {apt.doctor?.firstName} {apt.doctor?.lastName}
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>

@@ -638,6 +638,148 @@ class ApiClient {
   async getDemographicsReport() {
     return this.request<{ statistics: any }>("/reports/demographics");
   }
+
+  // Notifications
+  async getNotifications(params?: { read?: boolean; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          query.append(key, String(value));
+        }
+      });
+    }
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return this.request<{ notifications: any[] }>(
+      `/notifications${suffix}`,
+    );
+  }
+
+  async getNotificationsUnreadCount() {
+    return this.request<{ unreadCount: number }>(
+      "/notifications/unread-count",
+    );
+  }
+
+  async markNotificationAsRead(id: string) {
+    return this.request<{ notification: any }>(
+      `/notifications/${id}/read`,
+      {
+        method: "PUT",
+      },
+    );
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request<{ message: string }>("/notifications/read-all", {
+      method: "POST",
+    });
+  }
+
+  // Global search
+  async globalSearch(query: string) {
+    const params = new URLSearchParams();
+    params.append("q", query);
+    return this.request<{ query: string; results: any }>(
+      `/search?${params.toString()}`,
+    );
+  }
+
+  // Note templates (doctor)
+  async getNoteTemplates() {
+    return this.request<{ templates: any[] }>("/templates/notes");
+  }
+
+  async createNoteTemplate(data: {
+    title: string;
+    content: string;
+    category?: string;
+    tags?: string[];
+  }) {
+    return this.request<{ template: any }>("/templates/notes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateNoteTemplate(
+    id: string,
+    data: { title?: string; content?: string; category?: string; tags?: string[] },
+  ) {
+    return this.request<{ template: any }>(`/templates/notes/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteNoteTemplate(id: string) {
+    return this.request<{ message: string }>(`/templates/notes/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Organizations
+  async getMyOrganization() {
+    return this.request<{ organization: any }>("/organizations/me");
+  }
+
+  async updateMyOrganization(data: any) {
+    return this.request<{ organization: any; message: string }>(
+      "/organizations/me",
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  // System admin organization CRUD
+  async getOrganizations(params?: { isActive?: boolean }) {
+    const query = new URLSearchParams();
+    if (params && params.isActive !== undefined) {
+      query.append("isActive", String(params.isActive));
+    }
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return this.request<{ organizations: any[] }>(
+      `/organizations${suffix}`,
+    );
+  }
+
+  async createOrganization(data: any) {
+    return this.request<{
+      organization: any;
+      message: string;
+      admin?: {
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        defaultPassword: string;
+      };
+    }>(
+      "/organizations",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async updateOrganization(id: string, data: any) {
+    return this.request<{ organization: any; message: string }>(
+      `/organizations/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async deleteOrganization(id: string) {
+    return this.request<{ message: string }>(`/organizations/${id}`, {
+      method: "DELETE",
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

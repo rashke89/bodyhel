@@ -21,6 +21,16 @@ export default function PatientEHRPage() {
   const [labLoading, setLabLoading] = useState(false);
   const [prescriptionsLoaded, setPrescriptionsLoaded] = useState(false);
   const [labLoaded, setLabLoaded] = useState(false);
+  const [noteTemplates, setNoteTemplates] = useState<any[]>([]);
+  const [notesLoaded, setNotesLoaded] = useState(false);
+  const [showAddNote, setShowAddNote] = useState(false);
+  const [noteForm, setNoteForm] = useState({
+    content: "",
+    category: "clinical",
+  });
+  const [templateForm, setTemplateForm] = useState({
+    title: "",
+  });
 
   // Form states
   const [diagnosisForm, setDiagnosisForm] = useState({
@@ -60,6 +70,13 @@ export default function PatientEHRPage() {
     }
   }, [activeTab, patientId, prescriptionsLoaded, labLoaded]);
 
+  useEffect(() => {
+    if (activeTab === "notes" && !notesLoaded) {
+      fetchNoteTemplates();
+      setNotesLoaded(true);
+    }
+  }, [activeTab, notesLoaded]);
+
   const fetchEHR = async () => {
     try {
       const response = await api.getEHR(patientId);
@@ -94,6 +111,15 @@ export default function PatientEHRPage() {
       console.error('Failed to fetch lab results:', error);
     } finally {
       setLabLoading(false);
+    }
+  };
+
+  const fetchNoteTemplates = async () => {
+    try {
+      const res = await api.getNoteTemplates();
+      setNoteTemplates(res.templates || []);
+    } catch (error) {
+      console.error("Failed to fetch note templates:", error);
     }
   };
 
@@ -151,6 +177,47 @@ export default function PatientEHRPage() {
     }
   };
 
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noteForm.content.trim()) return;
+    try {
+      await api.updateEHR(patientId, {
+        note: noteForm.content,
+        noteCategory: noteForm.category,
+      });
+      setShowAddNote(false);
+      setNoteForm({ content: "", category: "clinical" });
+      fetchEHR();
+    } catch (error: any) {
+      alert(error.message || "Failed to add note");
+    }
+  };
+
+  const handleSaveTemplateFromNote = async () => {
+    if (!templateForm.title.trim() || !noteForm.content.trim()) return;
+    try {
+      await api.createNoteTemplate({
+        title: templateForm.title,
+        content: noteForm.content,
+        category: "ehr-note",
+      });
+      setTemplateForm({ title: "" });
+      fetchNoteTemplates();
+    } catch (error: any) {
+      alert(error.message || "Failed to save template");
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm("Obriši ovaj šablon?")) return;
+    try {
+      await api.deleteNoteTemplate(id);
+      setNoteTemplates((prev) => prev.filter((t) => t._id !== id));
+    } catch (error: any) {
+      alert(error.message || "Failed to delete template");
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -186,6 +253,7 @@ export default function PatientEHRPage() {
               { id: 'vitals', label: 'Vitalni znaci' },
               { id: 'prescriptions', label: 'Recepti' },
               { id: 'lab', label: 'Lab rezultati' },
+              { id: "notes", label: "Beleške" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -571,6 +639,115 @@ export default function PatientEHRPage() {
               )}
             </div>
           )}
+
+          {activeTab === "notes" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-[#2C6975]">
+                  Kliničke beleške
+                </h2>
+                <button
+                  onClick={() => setShowAddNote(true)}
+                  className="px-4 py-2 bg-[#6BB2A0] text-white rounded-lg hover:bg-[#5a9d8c]"
+                >
+                  + Nova beleška
+                </button>
+              </div>
+
+              {ehr.notes && ehr.notes.length > 0 ? (
+                <div className="space-y-3">
+                  {ehr.notes
+                    .slice()
+                    .reverse()
+                    .map((note: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                              {note.category || "clinical"}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(note.createdAt || note.date || new Date()).toLocaleString(
+                                "sr-RS",
+                              )}
+                            </span>
+                          </div>
+                          {note.createdBy && (
+                            <span className="text-xs text-gray-500">
+                              {note.createdBy.firstName} {note.createdBy.lastName}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                          {note.content}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  Nema unetih beleški za ovog pacijenta.
+                </p>
+              )}
+
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                  Šabloni beleški
+                </h3>
+                {noteTemplates.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Još uvek nemate definisane šablone. Kreirajte belešku i sačuvajte je kao
+                    šablon za brže popunjavanje u budućnosti.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {noteTemplates.map((tpl) => (
+                      <div
+                        key={tpl._id}
+                        className="border border-gray-200 rounded-lg p-3 bg-white flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-semibold text-gray-900">
+                              {tpl.title}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTemplate(tpl._id)}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              Obriši
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-600 line-clamp-3">
+                            {tpl.content}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNoteForm((prev) => ({
+                              ...prev,
+                              content:
+                                prev.content && prev.content.length > 0
+                                  ? `${prev.content}\n\n${tpl.content}`
+                                  : tpl.content,
+                            }))
+                          }
+                          className="mt-2 text-xs text-[#2C6975] hover:underline text-left"
+                        >
+                          Ubaci u belešku
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Add Diagnosis Modal */}
@@ -809,6 +986,101 @@ export default function PatientEHRPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Note Modal */}
+        {showAddNote && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-2xl font-semibold text-[#2C6975]">
+                  Nova klinička beleška
+                </h2>
+                <button
+                  onClick={() => setShowAddNote(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <form onSubmit={handleAddNote} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Kategorija
+                    </label>
+                    <select
+                      value={noteForm.category}
+                      onChange={(e) =>
+                        setNoteForm((prev) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    >
+                      <option value="clinical">Klinička</option>
+                      <option value="administrative">Administrativna</option>
+                      <option value="patient-reported">Od pacijenta</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sadržaj beleške *
+                    </label>
+                    <textarea
+                      value={noteForm.content}
+                      onChange={(e) =>
+                        setNoteForm((prev) => ({
+                          ...prev,
+                          content: e.target.value,
+                        }))
+                      }
+                      required
+                      rows={8}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      placeholder="Unesite kliničku belešku..."
+                    />
+                  </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={templateForm.title}
+                        onChange={(e) =>
+                          setTemplateForm({ title: e.target.value })
+                        }
+                        placeholder="Naziv šablona"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveTemplateFromNote}
+                        className="px-3 py-2 text-xs bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200"
+                      >
+                        Sačuvaj kao šablon
+                      </button>
+                    </div>
+                    <div className="flex space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddNote(false)}
+                        className="px-6 py-2 border border-gray-300 rounded-lg"
+                      >
+                        Otkaži
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2 bg-[#6BB2A0] text-white rounded-lg hover:bg-[#5a9d8c]"
+                      >
+                        Sačuvaj belešku
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}

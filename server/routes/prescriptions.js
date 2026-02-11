@@ -99,6 +99,11 @@ router.post('/', authenticate, authorize('doctor', 'admin'), validationRules.cre
       issueDate: new Date()
     };
 
+    // Set organization
+    if (req.user.organization) {
+      prescriptionData.organization = req.user.organization;
+    }
+
     // Generate e-prescription ID
     prescriptionData.ePrescriptionId = `EP${Date.now()}${Math.floor(Math.random() * 1000)}`;
 

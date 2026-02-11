@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema(
       enum: ["patient", "doctor", "nurse", "admin", "receptionist"],
       required: true,
     },
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      // Za sada nije hard-required zbog postojećih podataka;
+      // može se kasnije postrožiti za osoblje.
+    },
     phone: {
       type: String,
       trim: true,
@@ -134,5 +140,6 @@ userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ patientId: 1 });
 userSchema.index({ specialization: 1 });
+userSchema.index({ organization: 1, role: 1 });
 
 module.exports = mongoose.model("User", userSchema);

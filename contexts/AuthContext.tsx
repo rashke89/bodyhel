@@ -13,6 +13,7 @@ interface User {
   role: "patient" | "doctor" | "nurse" | "admin" | "receptionist";
   patientId?: string;
   specialization?: string;
+   organization?: string;
 }
 
 interface AuthContextType {

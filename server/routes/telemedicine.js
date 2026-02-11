@@ -95,7 +95,8 @@ router.post('/', authenticate, async (req, res) => {
         sessionType: sessionType || 'video',
         scheduledStart: appointment.date,
         roomId,
-        status: 'scheduled'
+        status: 'scheduled',
+        organization: appointment.organization || undefined
       });
 
       await session.save();

@@ -36,7 +36,8 @@ const auditLog = (action, resource) => {
           method: req.method,
           endpoint: req.path,
           requestBody: req.method !== 'GET' ? sanitizeRequestBody(req.body) : null,
-          responseStatus: responseStatus
+          responseStatus: responseStatus,
+          organization: req.user?.organization || null,
         };
 
         // Log changes for update/delete operations

@@ -195,7 +195,8 @@ router.post('/appointments', async (req, res) => {
       endTime,
       duration: calculateDuration(startTime, endTime),
       reason,
-      status: 'scheduled'
+      status: 'scheduled',
+      organization: doctorUser.organization || undefined
     });
 
     await appointment.save();

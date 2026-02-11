@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const { authenticate, authorize, authorizeOwnershipOrAdmin } = require('../middleware/auth');
 const { validationRules } = require('../middleware/validation');
 const auditLog = require('../middleware/audit');
@@ -103,6 +104,13 @@ router.post('/', authenticate, validationRules.createAppointment, async (req, re
       appointmentData.patient = req.user._id;
     }
 
+    // Set organization (doktorova ili userova ako postoji)
+    if (req.user.organization) {
+      appointmentData.organization = req.user.organization;
+    } else if (doctor.organization) {
+      appointmentData.organization = doctor.organization;
+    }
+
     // Check for time conflicts
     const conflictingAppointment = await Appointment.findOne({
       doctor: appointmentData.doctor,
@@ -129,6 +137,36 @@ router.post('/', authenticate, validationRules.createAppointment, async (req, re
     const populatedAppointment = await Appointment.findById(appointment._id)
       .populate('patient', 'firstName lastName email phone')
       .populate('doctor', 'firstName lastName email specialization');
+
+    // Create notifications for patient and doctor
+    try {
+      await Promise.all([
+        new Notification({
+          user: populatedAppointment.patient._id,
+          type: 'appointment',
+          title: 'Novi pregled zakazan',
+          body: `Pregled kod ${populatedAppointment.doctor.firstName} ${populatedAppointment.doctor.lastName} (${populatedAppointment.startTime})`,
+          relatedResource: {
+            resourceType: 'appointment',
+            resourceId: populatedAppointment._id,
+          },
+          link: '/dashboard/patient/appointments',
+        }).save(),
+        new Notification({
+          user: populatedAppointment.doctor._id,
+          type: 'appointment',
+          title: 'Novi pregled u rasporedu',
+          body: `Novi pregled sa pacijentom ${populatedAppointment.patient.firstName} ${populatedAppointment.patient.lastName} (${populatedAppointment.startTime})`,
+          relatedResource: {
+            resourceType: 'appointment',
+            resourceId: populatedAppointment._id,
+          },
+          link: '/dashboard/doctor/appointments',
+        }).save(),
+      ]);
+    } catch (notifyErr) {
+      console.error('Create appointment notification error:', notifyErr);
+    }
 
     res.status(201).json({
       message: 'Appointment created successfully',
@@ -423,6 +461,7 @@ router.post('/:id/follow-up', authenticate, authorize('doctor', 'admin'), async 
       isRecurring: isRecurring || false,
       recurringPattern,
       recurringEndDate: recurringEndDate ? new Date(recurringEndDate) : undefined,
+      organization: originalAppointment.organization,
     });
 
     await followUp.save();
@@ -430,6 +469,23 @@ router.post('/:id/follow-up', authenticate, authorize('doctor', 'admin'), async 
     const populatedFollowUp = await Appointment.findById(followUp._id)
       .populate('patient', 'firstName lastName email phone')
       .populate('doctor', 'firstName lastName email specialization');
+
+    // Notify patient about follow-up
+    try {
+      await new Notification({
+        user: populatedFollowUp.patient._id,
+        type: 'appointment',
+        title: 'Zakazan kontrolni pregled',
+        body: `Kontrola kod ${populatedFollowUp.doctor.firstName} ${populatedFollowUp.doctor.lastName} (${populatedFollowUp.startTime})`,
+        relatedResource: {
+          resourceType: 'appointment',
+          resourceId: populatedFollowUp._id,
+        },
+        link: '/dashboard/patient/appointments',
+      }).save();
+    } catch (notifyErr) {
+      console.error('Follow-up notification error:', notifyErr);
+    }
 
     res.status(201).json({
       message: 'Follow-up appointment scheduled',

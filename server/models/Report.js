@@ -56,6 +56,12 @@ const reportSchema = new mongoose.Schema(
     tags: [String],
     // Notes
     notes: String,
+    // Organization scope (multi-tenant)
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      index: true,
+    },
   },
   {
     timestamps: true,
