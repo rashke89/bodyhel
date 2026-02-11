@@ -10,7 +10,7 @@ export default function PatientEHRPage() {
   const patientId = params?.id as string;
   const [ehr, setEhr] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'diagnoses' | 'vitals' | 'prescriptions' | 'lab'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'diagnoses' | 'vitals' | 'prescriptions' | 'lab' | 'notes'>('overview');
   const [showAddDiagnosis, setShowAddDiagnosis] = useState(false);
   const [showAddVitals, setShowAddVitals] = useState(false);
   const [icd10Codes, setIcd10Codes] = useState<any[]>([]);
